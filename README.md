@@ -53,24 +53,11 @@ pixi run report                                  # build report/main.pdf
 Each run writes to `runs/<run_name>/`: `model.pt`, `config.yaml`, `history.csv`,
 `metrics.json`, `per_window.csv`, `figures/`.
 
-## Design decisions
+## Notes
 
-| Decision | Choice | Reason |
-|---|---|---|
-| Split | official `strat_fold` 1-8 / 9 / 10 | patient-wise; split before windowing |
-| Sampling rate | 100 Hz | the ADS1292R has no 100 SPS mode; the device will sample at 500 SPS and decimate by 5, which is how PTB-XL's 100 Hz files were made |
-| Filtering | Butterworth high-pass in SOS form, whole 10 s record | `sosfiltfilt` padded with almost the whole record; causal mode starts from steady state (`sosfilt_zi`) |
-| Scaling | one global scale (train std, in mV) | nothing per window has to be transmitted next to the latent vector |
-| Windows | 256 samples; stride 128 for training, 256 for evaluation | overlap is augmentation only; the device sends non-overlapping windows, which keeps the 32:1 ratio |
-| Model | Conv1d ×3 (stride 2, padding 2) → Linear → z; Linear → (Upsample + Conv1d) ×3 → Conv1d | encoder uses only operators likely supported by ESP-DL; no activation on z or output |
-| Baseline | PCA with k = latent size | shows whether the CAE beats a linear method at equal payload |
-| Reporting | median / IQR / mean PRDN per window and per recording | windows from one recording are correlated |
-
-PRD and PRDN are ratios, so the global scale cancels. After high-pass filtering windows are
-near zero-mean and PRD ≈ PRDN; published PRD values computed with a DC/ADC offset are not comparable.
-
-The payload ratio (512 B raw 16-bit vs 16 B int8 latent for z=16) is idealised: it excludes
-headers, the decoder and quantization error. This is a research demonstrator, not a diagnostic device.
+- Data is split by the official PTB-XL `strat_fold` (patient-wise), before windowing.
+- Training uses 50 % overlapping windows; evaluation uses non-overlapping ones, as the device would send them.
+- Payload ratios are idealised: they exclude packet headers and the decoder itself.
 
 ## Layout
 
