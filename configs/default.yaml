@@ -1,0 +1,49 @@
+# Baseline experiment. Override per run with --config other.yaml or --set key=value.
+run_name: null          # auto: z{latent}_hp{cutoff}_{mode}
+seed: 42
+
+data:
+  root: data/ptbxl              # contains ptbxl_database.csv and records100/
+  processed_dir: data/processed
+  lead: II
+  fs: 100                       # records100; the device samples at 500 SPS and decimates by 5
+  folds:                        # official strat_fold split (patient-wise)
+    train: [1, 2, 3, 4, 5, 6, 7, 8]
+    val: [9]
+    test: [10]
+  max_records:                  # null = all; set small numbers for quick pipeline checks
+    train: null
+    val: null
+    test: null
+
+filter:
+  highpass_hz: 0.5              # baseline-wander cutoff; compare with 0.05
+  order: 2                      # Butterworth order (SOS form)
+  mode: zero_phase              # zero_phase (sosfiltfilt) | causal (sosfilt, streaming-like)
+  lowpass_hz: null              # e.g. 40; null = no low-pass
+
+window:
+  size: 256                     # 2.56 s at 100 Hz
+  train_stride: 128             # 50 % overlap (augmentation)
+  eval_stride: 256              # non-overlapping, as the device would transmit
+
+model:
+  latent_dim: 16
+  channels: [8, 16, 32]
+  kernel_size: 5
+
+train:
+  batch_size: 128
+  lr: 0.001
+  epochs: 150                   # upper bound; early stopping usually ends sooner
+  patience: 15                  # early stopping on validation MSE (> scheduler patience)
+  scheduler:                    # ReduceLROnPlateau on validation MSE; set to null to disable
+    factor: 0.5
+    patience: 5
+    min_lr: 1.0e-5
+  device: auto                  # auto | cuda | cpu
+
+eval:
+  pca_fit_windows: 50000        # train windows used to fit the PCA baseline
+  n_examples: 3                 # best / median / worst traces to plot
+  min_denominator: 1.0e-6       # windows with ||x|| or ||x - mean|| below this are excluded

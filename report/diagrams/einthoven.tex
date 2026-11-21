@@ -1,0 +1,24 @@
+% Einthoven triangle with the limb leads; lead II highlighted, plus the ADS1292R channel mapping.
+\begin{tikzpicture}[
+    el/.style={circle, draw, thick, minimum size=9mm, font=\small, fill=white},
+    lead/.style={-{Stealth[length=2.5mm]}, thick, gray},
+    lead2/.style={-{Stealth[length=3mm]}, very thick, blue!70!black},
+  ]
+  \node[el] (RA) at (0,3.2) {RA};
+  \node[el] (LA) at (4.4,3.2) {LA};
+  \node[el] (LL) at (2.2,0) {LL};
+  \node[el, dashed] (RL) at (-0.6,0) {RL};
+
+  \draw[lead] (RA) -- node[above, font=\small, text=black] {I} (LA);
+  \draw[lead2] (RA) -- node[left, font=\small, text=blue!70!black] {II} (LL);
+  \draw[lead] (LA) -- node[right, font=\small, text=black] {III} (LL);
+
+  \node[font=\footnotesize, align=left, anchor=west] at (5.4,2.6)
+    {\(\mathrm{I} = \Phi_{LA} - \Phi_{RA}\)\\[2pt]
+     \(\mathbf{II} = \Phi_{LL} - \Phi_{RA}\)\\[2pt]
+     \(\mathrm{III} = \Phi_{LL} - \Phi_{LA}\)};
+  \node[font=\footnotesize, align=left, anchor=west] at (5.4,0.7)
+    {ADS1292R, канал 2:\\
+     LL \(\rightarrow\) IN2P,\; RA \(\rightarrow\) IN2N\\
+     RL \(\leftarrow\) RLDOUT (активна референция)};
+\end{tikzpicture}

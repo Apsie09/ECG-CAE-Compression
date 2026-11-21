@@ -1,0 +1,56 @@
+% Simplified connection of the selected parts: electrodes -> ADS1292R -> SPI -> ESP32-S3 -> radio -> PC.
+% Pin names sit just inside the chip edges; wires run between the chip edges.
+\begin{tikzpicture}[
+    font=\footnotesize,
+    chip/.style={draw, very thick, fill=gray!6},
+    el/.style={circle, draw, thick, minimum size=8mm, fill=white, font=\scriptsize},
+    pin/.style={font=\scriptsize\ttfamily},
+    to/.style={thick, -{Stealth[length=2mm]}},
+  ]
+  % ---- ADS1292R: x 2.5 .. 7.5
+  \draw[chip] (2.5,-0.1) rectangle (7.5,4.4);
+  \node[font=\footnotesize\bfseries, anchor=north] at (5.0,4.35) {ADS1292R};
+  \node[align=center, font=\scriptsize] at (5.0,1.9) {канал 2:\\PGA (\(G = 6\))\\\(\Delta\Sigma\) АЦП, 24 bit\\500 SPS\\[2pt]RLD усилвател};
+
+  % ---- ESP32-S3: x 10.0 .. 15.0
+  \draw[chip] (10.0,-0.1) rectangle (15.0,4.4);
+  \node[font=\footnotesize\bfseries, anchor=north] at (12.5,4.35) {ESP32-S3};
+  \node[align=center, font=\scriptsize] at (13.05,1.9) {децимация 5:1\\ВЧ филтър 0.5 Hz\\буфер 256 отчета\\[2pt]\textbf{CAE енкодер}\\квантуване на \(z\) до int8};
+
+  % ---- PC
+  \node[draw, thick, rounded corners=2pt, align=center, fill=white, text width=2.4cm, minimum height=2.4cm] (pc) at (18.2,2.15)
+    {Компютър\\[3pt]деквантуване\\\textbf{CAE}\\\textbf{декодер}\\визуализация};
+
+  % ---- electrodes -> analog inputs
+  \node[el] (LL) at (0.2,3.3) {LL};
+  \node[el] (RA) at (0.2,2.1) {RA};
+  \node[el] (RL) at (0.2,0.6) {RL};
+  \node[pin, anchor=west] at (2.55,3.3) {IN2P};
+  \node[pin, anchor=west] at (2.55,2.1) {IN2N};
+  \node[pin, anchor=west] at (2.55,0.6) {RLDOUT};
+  \draw[to] (LL.east) -- (2.5,3.3);
+  \draw[to] (RA.east) -- (2.5,2.1);
+  \draw[to] (2.5,0.6) -- (RL.east);
+  \node[font=\scriptsize] at (1.35,3.95) {отвеждане II};
+  \node[font=\scriptsize] at (1.1,-0.2) {активна референция};
+
+  % ---- SPI and control: ESP32-S3 -> ADS1292R
+  \foreach \sig/\gpio/\y in {SCLK/GPIO12/3.7, DIN/GPIO11/3.1, CS/GPIO10/1.9, START/GPIO14/0.7}{
+    \node[pin, anchor=east] at (7.45,\y) {\sig};
+    \node[pin, anchor=west] at (10.05,\y) {\gpio};
+    \draw[to] (10.0,\y) -- (7.5,\y);
+  }
+  % ---- ADS1292R -> ESP32-S3 (data, data-ready interrupt)
+  \foreach \sig/\gpio/\y in {DOUT/GPIO13/2.5, DRDY/GPIO9/1.3}{
+    \node[pin, anchor=east] at (7.45,\y) {\sig};
+    \node[pin, anchor=west] at (10.05,\y) {\gpio};
+    \draw[to] (7.5,\y) -- (10.0,\y);
+  }
+  \node[font=\scriptsize] at (8.75,4.7) {SPI + управление};
+
+  % ---- radio link
+  \draw[to] (15.0,2.15) -- node[above, font=\scriptsize] {BLE / Wi-Fi} node[below, font=\scriptsize, align=center] {32 B на\\2.56 s} (pc.west);
+
+  % ---- power
+  \node[font=\scriptsize, text=gray!50!black, anchor=north] at (8.75,-0.3) {общо захранване 3.3 V от Li-Po батерия през линеен стабилизатор (LDO)};
+\end{tikzpicture}

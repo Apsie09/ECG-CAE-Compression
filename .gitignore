@@ -1,0 +1,14 @@
+.pixi/
+__pycache__/
+data/*
+!data/README.md
+runs/
+.ipynb_checkpoints/
+report/*.aux
+report/*.log
+report/*.out
+report/*.toc
+report/*.synctex.gz
+docs/*.aux
+docs/*.log
+.codeboarding/

@@ -1,0 +1,44 @@
+[workspace]
+name = "ecg-cae"
+description = "PTB-XL Lead II 1D convolutional autoencoder for ECG compression (ITM course project)"
+channels = ["conda-forge"]
+# NVIDIA driver 580 -> CUDA 13.0 (RTX 4060)
+platforms = [{ name = "linux-64-cuda", platform = "linux-64", cuda = "13.0" }]
+
+[activation.env]
+# Replace any inherited PYTHONPATH (e.g. ROS) so only this env + the project are importable.
+PYTHONPATH = "$PIXI_PROJECT_ROOT"
+
+[dependencies]
+python = "3.12.*"
+numpy = "*"
+scipy = "*"
+pandas = "*"
+matplotlib = "*"
+wfdb = "*"
+pytorch-gpu = "*"
+scikit-learn = "*"   # PCA baseline
+pyyaml = "*"
+tqdm = "*"
+pytest = "*"
+jupyterlab = "*"
+tensorboard = ">=2.21.0,<3"
+
+[tasks]
+download   = { cmd = "python -m src.download", description = "Download PTB-XL 1.0.3 and extract records100 + metadata" }
+preprocess = { cmd = "python -m src.preprocess", description = "Load Lead II, filter, cache per split" }
+train      = { cmd = "python -m src.train", description = "Train one CAE (pass --config / --set overrides)" }
+evaluate   = { cmd = "python -m src.evaluate", description = "Evaluate runs on the test fold (--run DIR or --all)" }
+compare    = { cmd = "python -m src.compare", description = "Collect all evaluated runs into runs/summary.csv" }
+sweep-plot = { cmd = "python -m src.plot_sweep", description = "Latent sweep figure + table -> figures/latent_sweep.*" }
+filters    ={ cmd = "python -m src.plot_filters", description = "Filter response + example trace figures" }
+smoke      = { cmd = "python -m src.train --config configs/smoke.yaml && python -m src.evaluate --run runs/smoke", description = "Tiny end-to-end check on a subset" }
+sweep      = { cmd = "python -m src.train --set model.latent_dim=8 && python -m src.train --set model.latent_dim=16 && python -m src.train --set model.latent_dim=32 && python -m src.evaluate --all && python -m src.compare", description = "Latent size sweep 8/16/32" }
+test       = { cmd = "pytest -q tests", description = "Unit tests" }
+board      = { cmd = "tensorboard --logdir runs --port 6006", description = "Live training curves + reconstructions at http://localhost:6006" }
+report-figs = { cmd = "python -m src.plot_filters && python -m src.plot_sweep && python -m src.plot_report", description = "Regenerate all report figures -> figures/" }
+report     = { cmd = "pdflatex -interaction=nonstopmode -halt-on-error main.tex && pdflatex -interaction=nonstopmode -halt-on-error main.tex", cwd = "report", description = "Build report/main.pdf (system pdflatex)" }
+lab        = "jupyter lab"
+
+# The optional ESP32-S3 work (esp-ppq quantization) will be added later as a separate
+# [feature.embedded] environment, since esp-ppq pins its own torch/onnx versions.

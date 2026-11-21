@@ -1,0 +1,11 @@
+# Small subset to check the pipeline end to end in a couple of minutes.
+run_name: smoke
+data:
+  max_records:
+    train: 1000
+    val: 200
+    test: 200
+train:
+  epochs: 5
+eval:
+  pca_fit_windows: 5000
